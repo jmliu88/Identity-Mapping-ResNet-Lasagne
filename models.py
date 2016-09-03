@@ -8,8 +8,8 @@ from lasagne.layers.dnn import Conv2DDNNLayer as ConvLayer
 from lasagne.layers import Pool2DLayer, ElemwiseSumLayer, NonlinearityLayer, PadLayer, GlobalPoolLayer, ExpressionLayer
 from lasagne.init import Orthogonal, HeNormal, GlorotNormal
 
-PIXELS = 32
-imageSize = PIXELS * PIXELS
+window_length = 32
+imageSize = window_length * window_length
 num_features = imageSize * 3
 
 he_norm = HeNormal(gain='relu')
@@ -56,7 +56,7 @@ def ResNet_FullPreActivation(input_var=None, n=18):
         return block
 
     # Building the network
-    l_in = InputLayer(shape=(None, 3, PIXELS, PIXELS), input_var=input_var)
+    l_in = InputLayer(shape=(None, 3, window_length, feat_dim), input_var=input_var)
 
     # first layer, output is 16 x 32 x 32
     l = batch_norm(ConvLayer(l_in, num_filters=16, filter_size=(3,3), stride=(1,1), nonlinearity=rectify, pad='same', W=he_norm))
@@ -89,7 +89,7 @@ def ResNet_FullPreActivation(input_var=None, n=18):
 
 # ========================================================================================================================
 
-def ResNet_BottleNeck_FullPreActivation(input_var=None, n=18):
+def ResNet_BottleNeck_FullPreActivation(input_var=None, window_length=100, feat_dim=23, n=18):
     '''
     Adapted from https://github.com/Lasagne/Recipes/tree/master/papers/deep_residual_learning.
     Tweaked to be consistent with 'Identity Mappings in Deep Residual Networks', Kaiming He et al. 2016 (https://arxiv.org/abs/1603.05027)
@@ -146,7 +146,7 @@ def ResNet_BottleNeck_FullPreActivation(input_var=None, n=18):
         return block
 
     # Building the network
-    l_in = InputLayer(shape=(None, 3, PIXELS, PIXELS), input_var=input_var)
+    l_in = InputLayer(shape=(None, 3, window_length, feat_dim), input_var=input_var)
 
     # first layer, output is 16x16x16
     l = batch_norm(ConvLayer(l_in, num_filters=16, filter_size=(3,3), stride=(1,1), nonlinearity=rectify, pad='same', W=he_norm))
@@ -173,7 +173,8 @@ def ResNet_BottleNeck_FullPreActivation(input_var=None, n=18):
     avg_pool = GlobalPoolLayer(bn_post_relu)
 
     # fully connected layer
-    network = DenseLayer(avg_pool, num_units=10, W=HeNormal(), nonlinearity=softmax)
+    #network = DenseLayer(avg_pool, num_units=10, W=HeNormal(), nonlinearity=softmax)
+    network = DenseLayer(avg_pool, num_units=1, W=HeNormal(), nonlinearity=sigmoid)
 
     return network
 
@@ -231,7 +232,7 @@ def ResNet_FullPre_Wide(input_var=None, n=6, k=4):
         return block
 
     # Building the network
-    l_in = InputLayer(shape=(None, 3, PIXELS, PIXELS), input_var=input_var)
+    l_in = InputLayer(shape=(None, 3, window_length, window_length), input_var=input_var)
 
     # first layer, output is 16 x 64 x 64
     l = batch_norm(ConvLayer(l_in, num_filters=n_filters[0], filter_size=(3,3), stride=(1,1), nonlinearity=rectify, pad='same', W=he_norm))
